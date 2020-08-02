@@ -17,7 +17,10 @@
 package com.google.mlkit.vision.demo.objectdetector;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
+import android.speech.tts.TextToSpeech;
+
 
 import androidx.annotation.NonNull;
 
@@ -31,7 +34,11 @@ import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.ObjectDetectorOptionsBase;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * A processor to run object detector.
@@ -42,9 +49,21 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
 
     private final ObjectDetector detector;
 
+    private static Set<Integer> used = new HashSet<Integer>();
+    TextToSpeech t1;
+
     public ObjectDetectorProcessor(Context context, ObjectDetectorOptionsBase options) {
         super(context);
         detector = ObjectDetection.getClient(options);
+
+        t1 = new TextToSpeech(context.getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    t1.setLanguage(Locale.UK);
+                }
+            }
+        });
     }
 
     @Override
@@ -66,6 +85,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
     protected void onSuccess(
             @NonNull List<DetectedObject> results, @NonNull GraphicOverlay graphicOverlay) {
         for (DetectedObject object : results) {
+            setX(object);
             graphicOverlay.add(new ObjectGraphic(graphicOverlay, object));
         }
     }
@@ -73,5 +93,21 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
     @Override
     protected void onFailure(@NonNull Exception e) {
         Log.e(TAG, "Object detection failed!", e);
+    }
+
+    public void setX(DetectedObject object)
+    {
+        if(!used.contains(object.getTrackingId()))
+        {
+            String toSpeak = "Warning";
+            t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+            used.add(object.getTrackingId());
+            String log = Arrays.toString(used.toArray());
+            if (object.getLabels().size() != 0) {
+                log += "   " + object.getLabels().get(0).getText();
+                //Log.d("myTag",  "" + Arrays.toString((used.toArray())) + "   " + object.getLabels().get(0).getText());
+            }
+            Log.d("myTag", log);
+        }
     }
 }

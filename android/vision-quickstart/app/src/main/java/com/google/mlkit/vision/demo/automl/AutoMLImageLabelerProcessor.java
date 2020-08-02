@@ -74,6 +74,7 @@ public class AutoMLImageLabelerProcessor extends VisionProcessorBase<List<ImageL
     protected void onSuccess(
             @NonNull List<ImageLabel> labels, @NonNull GraphicOverlay graphicOverlay) {
         graphicOverlay.add(new LabelGraphic(graphicOverlay, labels));
+        Log.d("myTag", "This is my test message");
     }
 
     @Override

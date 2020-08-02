@@ -20,13 +20,17 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.util.Log;
 
 import com.google.mlkit.vision.demo.GraphicOverlay;
 import com.google.mlkit.vision.demo.GraphicOverlay.Graphic;
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.DetectedObject.Label;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Draw the detected object info in preview.
@@ -55,6 +59,9 @@ public class ObjectGraphic extends Graphic {
     private final Paint[] boxPaints;
     private final Paint[] textPaints;
     private final Paint[] labelPaints;
+
+    private static int oldTrackingId = -1;
+    private static int counter = -1;
 
     ObjectGraphic(GraphicOverlay overlay, DetectedObject object) {
         super(overlay);
@@ -87,6 +94,7 @@ public class ObjectGraphic extends Graphic {
         int colorID = object.getTrackingId() == null
                 ? 0 : Math.abs(object.getTrackingId() % NUM_COLORS);
         float textWidth = textPaints[colorID].measureText("Tracking ID: " + object.getTrackingId());
+//        Log.d("myTag", "" + object.getTrackingId());
         float lineHeight = TEXT_SIZE + STROKE_WIDTH;
         float yLabelOffset = -lineHeight;
 
@@ -138,4 +146,6 @@ public class ObjectGraphic extends Graphic {
             yLabelOffset += lineHeight;
         }
     }
+
+
 }
