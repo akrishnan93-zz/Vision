@@ -10,7 +10,6 @@ Features that are included in this Quickstart app:
 * [Object Detection](https://developers.google.com/ml-kit/vision/object-detection/android) - Detect, track, and classify objects in real time and static images
 * [Face Detection](https://developers.google.com/ml-kit/vision/face-detection/android) - Detect faces in real time and static images
 * [Text Recognition](https://developers.google.com/ml-kit/vision/text-recognition/android) - Recognize text in real time and static images
-* [Barcode Scanning](https://developers.google.com/ml-kit/vision/barcode-scanning/android)  - Scan barcodes in real time and static images
 * [Image Labeling](https://developers.google.com/ml-kit/vision/image-labeling/android) - Label images in real time and static images
 * [Custom Image Labeling - Birds](https://developers.google.com/ml-kit/vision/image-labeling/custom-models/android) - Label images of birds with a custom TensorFlow Lite model.
 
@@ -26,7 +25,7 @@ Features that are included in this Quickstart app:
 This app supports three usage scenarios: Live Camera, Static Image, and CameraX enabled live camera.
 
 ### Live Camera scenario
-It uses the camera preview as input and contains these API workflows: Object detection & tracking, Face Detection, Text Recognition, Barcode Scanning, and Image Labeling. There's also a settings page that allows you to configure several options:
+It uses the camera preview as input and contains these API workflows: Object detection & tracking, Face Detection, Text Recognition, and Image Labeling. There's also a settings page that allows you to configure several options:
 * Camera
     * Preview Size - Specify the preview size of rear camera manually (Default size is chose appropriately based on screen size)
     * Enable live viewport - Prevent the live camera preview from being blocked by API rendering speed

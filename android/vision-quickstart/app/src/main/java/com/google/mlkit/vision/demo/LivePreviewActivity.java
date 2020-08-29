@@ -43,7 +43,6 @@ import android.widget.ToggleButton;
 import com.google.android.gms.common.annotation.KeepName;
 import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.demo.automl.AutoMLImageLabelerProcessor;
-import com.google.mlkit.vision.demo.barcodescanner.BarcodeScannerProcessor;
 import com.google.mlkit.vision.demo.facedetector.FaceDetectorProcessor;
 import com.google.mlkit.vision.demo.labeldetector.LabelDetectorProcessor;
 import com.google.mlkit.vision.demo.objectdetector.ObjectDetectorProcessor;
@@ -73,7 +72,6 @@ public final class LivePreviewActivity extends AppCompatActivity
     private static final String OBJECT_DETECTION_CUSTOM = "Custom Object Detection (Birds)";
     private static final String FACE_DETECTION = "Face Detection";
     private static final String TEXT_RECOGNITION = "Text Recognition";
-    private static final String BARCODE_SCANNING = "Barcode Scanning";
     private static final String IMAGE_LABELING = "Image Labeling";
     private static final String IMAGE_LABELING_CUSTOM = "Custom Image Labeling (Birds)";
     private static final String AUTOML_LABELING = "AutoML Image Labeling";
@@ -107,7 +105,6 @@ public final class LivePreviewActivity extends AppCompatActivity
         options.add(OBJECT_DETECTION_CUSTOM);
         options.add(FACE_DETECTION);
         options.add(TEXT_RECOGNITION);
-        options.add(BARCODE_SCANNING);
         options.add(IMAGE_LABELING);
         options.add(IMAGE_LABELING_CUSTOM);
         options.add(AUTOML_LABELING);
@@ -226,10 +223,6 @@ public final class LivePreviewActivity extends AppCompatActivity
                             PreferenceUtils.getFaceDetectorOptionsForLivePreview(this);
                     cameraSource.setMachineLearningFrameProcessor(
                             new FaceDetectorProcessor(this, faceDetectorOptions));
-                    break;
-                case BARCODE_SCANNING:
-                    Log.i(TAG, "Using Barcode Detector Processor");
-                    cameraSource.setMachineLearningFrameProcessor(new BarcodeScannerProcessor(this));
                     break;
                 case IMAGE_LABELING:
                     Log.i(TAG, "Using Image Label Detector Processor");

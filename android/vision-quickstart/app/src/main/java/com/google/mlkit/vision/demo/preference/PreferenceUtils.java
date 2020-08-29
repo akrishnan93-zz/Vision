@@ -85,14 +85,6 @@ public class PreferenceUtils {
         }
     }
 
-    public static ObjectDetectorOptions getObjectDetectorOptionsForStillImage(Context context) {
-        return getObjectDetectorOptions(
-                context,
-                R.string.pref_key_still_image_object_detector_enable_multiple_objects,
-                R.string.pref_key_still_image_object_detector_enable_classification,
-                ObjectDetectorOptions.SINGLE_IMAGE_MODE);
-    }
-
     public static ObjectDetectorOptions getObjectDetectorOptionsForLivePreview(Context context) {
         return getObjectDetectorOptions(
                 context,
@@ -123,16 +115,6 @@ public class PreferenceUtils {
             builder.enableClassification();
         }
         return builder.build();
-    }
-
-    public static CustomObjectDetectorOptions getCustomObjectDetectorOptionsForStillImage(
-            Context context, LocalModel localModel) {
-        return getCustomObjectDetectorOptions(
-                context,
-                localModel,
-                R.string.pref_key_still_image_object_detector_enable_multiple_objects,
-                R.string.pref_key_still_image_object_detector_enable_classification,
-                CustomObjectDetectorOptions.SINGLE_IMAGE_MODE);
     }
 
     public static CustomObjectDetectorOptions getCustomObjectDetectorOptionsForLivePreview(
