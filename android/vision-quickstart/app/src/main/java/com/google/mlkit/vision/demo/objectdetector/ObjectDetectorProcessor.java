@@ -55,7 +55,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
     TextToSpeech t1;
 
     private static PriorityQueue<DetectedObjectProxy> objectPriority = new PriorityQueue<>();
- 
+
     public ObjectDetectorProcessor(Context context, ObjectDetectorOptionsBase options) {
         super(context);
         detector = ObjectDetection.getClient(options);
