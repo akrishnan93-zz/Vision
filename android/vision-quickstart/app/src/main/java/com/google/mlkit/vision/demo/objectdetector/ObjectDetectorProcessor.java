@@ -84,9 +84,15 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
     @Override
     protected void onSuccess(
             @NonNull List<DetectedObject> results, @NonNull GraphicOverlay graphicOverlay) {
+
         for (DetectedObject object : results) {
             setX(object);
-            graphicOverlay.add(new ObjectGraphic(graphicOverlay, object));
+
+            if (object.getLabels().size() != 0) {
+                if (!object.getLabels().get(0).getText().equals("N/A")) { //Only overlay if we are identifying a proper bird
+                    graphicOverlay.add(new ObjectGraphic(graphicOverlay, object));
+                }
+            }
         }
     }
 
@@ -102,9 +108,11 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
             String toSpeak = "Warning";
             t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
             used.add(object.getTrackingId());
-            String log = Arrays.toString(used.toArray());
+            //String log = Arrays.toString(used.toArray());
+            String log = "";
             if (object.getLabels().size() != 0) {
-                log += "   " + object.getLabels().get(0).getText();
+                //log += "   " + object.getLabels().get(0).getText();
+                //log += "   " + object.getLabels().get(0).getConfidence();
                 //Log.d("myTag",  "" + Arrays.toString((used.toArray())) + "   " + object.getLabels().get(0).getText());
             }
             Log.d("myTag", log);

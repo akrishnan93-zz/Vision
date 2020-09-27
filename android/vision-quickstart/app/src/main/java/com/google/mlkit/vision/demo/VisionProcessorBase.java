@@ -37,6 +37,7 @@ import com.google.android.gms.tasks.TaskExecutors;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.demo.preference.PreferenceUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
