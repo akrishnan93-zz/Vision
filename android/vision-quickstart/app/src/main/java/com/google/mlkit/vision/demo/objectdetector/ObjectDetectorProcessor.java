@@ -18,6 +18,7 @@ package com.google.mlkit.vision.demo.objectdetector;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.speech.tts.TextToSpeech;
 
@@ -33,7 +34,11 @@ import com.google.mlkit.vision.objects.ObjectDetection;
 import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.ObjectDetectorOptionsBase;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +92,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
 
         for (DetectedObject object : results) {
             setX(object);
+            writeToFile("sexyTime");
 
             if (object.getLabels().size() != 0) {
                 if (!object.getLabels().get(0).getText().equals("N/A")) { //Only overlay if we are identifying a proper bird
@@ -109,7 +115,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
             t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
             used.add(object.getTrackingId());
             //String log = Arrays.toString(used.toArray());
-            String log = "";
+            String log = "sd";
             if (object.getLabels().size() != 0) {
                 //log += "   " + object.getLabels().get(0).getText();
                 //log += "   " + object.getLabels().get(0).getConfidence();

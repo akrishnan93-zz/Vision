@@ -332,7 +332,7 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
                     Log.i(TAG, "Using Custom Object Detector (Bird) Processor");
                     LocalModel localModel =
                             new LocalModel.Builder()
-                                    .setAssetFilePath("custom_models/bird_classifier.tflite")
+                                    .setAssetFilePath("custom_models/primaryModel.tflite")
                                     .build();
                     CustomObjectDetectorOptions customObjectDetectorOptions =
                             PreferenceUtils.getCustomObjectDetectorOptionsForLivePreview(this, localModel);
@@ -360,7 +360,7 @@ public final class CameraXLivePreviewActivity extends AppCompatActivity
                     Log.i(TAG, "Using Custom Image Label (Bird) Detector Processor");
                     LocalModel localClassifier =
                             new LocalModel.Builder()
-                                    .setAssetFilePath("custom_models/bird_classifier.tflite")
+                                    .setAssetFilePath("custom_models/primaryModel.tflite")
                                     .build();
                     CustomImageLabelerOptions customImageLabelerOptions =
                             new CustomImageLabelerOptions.Builder(localClassifier).build();
