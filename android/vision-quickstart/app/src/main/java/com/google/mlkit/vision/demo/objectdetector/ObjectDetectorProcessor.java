@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -90,16 +91,18 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
     protected void onSuccess(
             @NonNull List<DetectedObject> results, @NonNull GraphicOverlay graphicOverlay) {
 
+        double[][] line = whiskering(results);
+
         for (DetectedObject object : results) {
             setX(object);
-            writeToFile("sexyTime");
-
             if (object.getLabels().size() != 0) {
                 if (!object.getLabels().get(0).getText().equals("N/A")) { //Only overlay if we are identifying a proper bird
                     graphicOverlay.add(new ObjectGraphic(graphicOverlay, object));
                 }
             }
         }
+
+        Log.d(TAG, "line start: " + Arrays.toString(line[0]) + ", line end: " + Arrays.toString(line[1]));
     }
 
     @Override
@@ -123,5 +126,69 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
             }
             Log.d("myTag", log);
         }
+    }
+
+    public double[][] whiskering(List<DetectedObject> results) {
+        int finalWidth = 500;
+        int finalHeight = 500;
+        int screenMidWidth = finalWidth / 2;
+
+        double threshConf = 0.1;
+        ArrayList<double[]> output = new ArrayList<>();
+
+        for (DetectedObject object : results) {
+//            setX(object);
+//            if (object.getLabels().size() != 0) {
+//                if (!object.getLabels().get(0).getText().equals("N/A")) { //Only overlay if we are identifying a proper bird
+//                    graphicOverlay.add(new ObjectGraphic(graphicOverlay, object));
+//                }
+//            }
+
+            if (object.getLabels().size() == 0) {
+                continue;
+            }
+
+            if (object.getLabels().get(0).getConfidence() >= threshConf) {
+                int midX = object.getBoundingBox().centerX();
+                int midY = object.getBoundingBox().centerY();
+
+                double red_dist = midX - screenMidWidth; // how far away horizontally the object is from the mid point
+                double blue_dist = Math.sqrt((Math.pow(midX - screenMidWidth, 2) + Math.pow(midY - finalHeight, 2))); // Euc distance from bottom mid of the screen to the object
+
+                double yx_angle = Math.asin(red_dist / blue_dist) * (180 / Math.PI);
+                double height = object.getBoundingBox().height();
+
+                double distance = ((165 * 615) / height) / 30.48; // Distance from camera based on triangle similarity. Divide by 30.48 to get feet
+
+                if (distance < 10) {
+                    double[] current = {midX - screenMidWidth, midY -  height, distance, yx_angle};
+                    output.add(current);
+                }
+            }
+
+        }
+
+        double sumXArr = 0;
+        double sumYArr = 0;
+
+        for (double[] current : output) {
+            sumXArr += current[0] / current[2];
+            sumYArr += current[1] / current[2];
+        }
+
+        double avgX = 0;
+        double avgY = 0;
+
+        if (output.size() > 0) {
+            avgX = -1 * sumXArr / output.size();
+            avgY =  -1 * sumYArr / output.size();
+        }
+
+        double[] lineStart = {avgX + screenMidWidth, avgY};
+        double[] lineEnd = {screenMidWidth, finalHeight};
+
+        double[][] line = {lineStart, lineEnd};
+
+        return line;
     }
 }
