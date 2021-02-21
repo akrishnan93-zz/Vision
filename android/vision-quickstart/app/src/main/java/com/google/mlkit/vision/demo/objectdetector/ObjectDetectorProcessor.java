@@ -17,6 +17,7 @@
 package com.google.mlkit.vision.demo.objectdetector;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -92,6 +93,10 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
             @NonNull List<DetectedObject> results, @NonNull GraphicOverlay graphicOverlay) {
 
         double[][] line = whiskering(results);
+        Rect lineRec = new Rect((int)line[0][0], (int)line[1][1], (int)line[1][0], (int)line[0][1]);
+        List<DetectedObject.Label> linelabels = new ArrayList<>();
+        DetectedObject lineObject = new DetectedObject(lineRec, 1, linelabels);
+        graphicOverlay.add(new ObjectGraphic(graphicOverlay, lineObject));
 
         for (DetectedObject object : results) {
             setX(object);
@@ -103,6 +108,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         }
 
         Log.d(TAG, "line start: " + Arrays.toString(line[0]) + ", line end: " + Arrays.toString(line[1]));
+
     }
 
     @Override
@@ -129,8 +135,8 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
     }
 
     public double[][] whiskering(List<DetectedObject> results) {
-        int finalWidth = 500;
-        int finalHeight = 500;
+        int finalWidth = 720;
+        int finalHeight = 1280;
         int screenMidWidth = finalWidth / 2;
 
         double threshConf = 0.1;

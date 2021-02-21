@@ -146,6 +146,4 @@ public class ObjectGraphic extends Graphic {
             yLabelOffset += lineHeight;
         }
     }
-
-
 }

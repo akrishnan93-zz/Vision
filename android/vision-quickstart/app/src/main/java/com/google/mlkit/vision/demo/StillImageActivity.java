@@ -385,7 +385,7 @@ public final class StillImageActivity extends AppCompatActivity {
                     Log.i(TAG, "Using Custom Object Detector Processor");
                     LocalModel localModel =
                             new LocalModel.Builder()
-                                    .setAssetFilePath("custom_models/VISION_Model_V2.tflite")
+                                    .setAssetFilePath("custom_models/primaryModel.tflite")
                                     .build();
                     CustomObjectDetectorOptions customObjectDetectorOptions =
                             PreferenceUtils.getCustomObjectDetectorOptionsForStillImage(this, localModel);
@@ -407,7 +407,7 @@ public final class StillImageActivity extends AppCompatActivity {
                     Log.i(TAG, "Using Custom Image Label Detector Processor");
                     LocalModel localClassifier =
                             new LocalModel.Builder()
-                                    .setAssetFilePath("custom_models/VISION_Model_V2.tflite")
+                                    .setAssetFilePath("custom_models/primaryModel.tflite")
                                     .build();
                     CustomImageLabelerOptions customImageLabelerOptions =
                             new CustomImageLabelerOptions.Builder(localClassifier).build();
