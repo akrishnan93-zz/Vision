@@ -18,6 +18,9 @@ package com.google.mlkit.vision.demo.objectdetector;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.media.Image;
+import android.opengl.Matrix;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -25,10 +28,27 @@ import android.speech.tts.TextToSpeech;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import com.google.android.gms.tasks.Task;
+import com.google.ar.core.Anchor;
+import com.google.ar.core.ArImage;
+import com.google.ar.core.Camera;
+import com.google.ar.core.Frame;
+import com.google.ar.core.Plane;
+import com.google.ar.core.PointCloud;
+import com.google.ar.core.Session;
+import com.google.ar.core.TrackingFailureReason;
+import com.google.ar.core.TrackingState;
+import com.google.ar.core.exceptions.CameraNotAvailableException;
+import com.google.ar.core.exceptions.NotYetAvailableException;
+import com.google.ar.core.exceptions.UnavailableApkTooOldException;
+import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
+import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.demo.GraphicOverlay;
+import com.google.mlkit.vision.demo.LivePreviewActivity;
 import com.google.mlkit.vision.demo.VisionProcessorBase;
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.ObjectDetection;
@@ -40,6 +60,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -98,6 +120,9 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         DetectedObject lineObject = new DetectedObject(lineRec, 1, linelabels);
         graphicOverlay.add(new ObjectGraphic(graphicOverlay, lineObject));
 
+        Log.d(TAG, "" + LivePreviewActivity.session);
+        onDrawFrame();
+
         for (DetectedObject object : results) {
             setX(object);
             if (object.getLabels().size() != 0) {
@@ -110,6 +135,51 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         Log.d(TAG, "line start: " + Arrays.toString(line[0]) + ", line end: " + Arrays.toString(line[1]));
 
     }
+
+    public void onDrawFrame() {
+        if (LivePreviewActivity.session == null) {
+            return;
+        }
+
+
+        // Notify ARCore session that the view size changed so that the perspective matrix and
+        // the video background can be properly adjusted.
+        LivePreviewActivity.session.setDisplayGeometry(0, 500, 1000);
+
+        // Obtain the current frame from ARSession. When the configuration is set to
+        // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
+        // camera framerate.
+        Frame frame = null;
+        try {
+            frame = LivePreviewActivity.session.update();
+        } catch (CameraNotAvailableException e) {
+            Log.d(TAG, "Frame is fucked");
+            e.printStackTrace();
+        }
+
+        if (frame != null) {
+            try (Image depthImage = frame.acquireDepthImage()) {
+                int d = getMillimetersDepth(depthImage, 0, 0);
+                StringBuilder dep = new StringBuilder();
+                //w=1440 h=3120
+                // for (int j = 0; j < 1920; j += 100) {
+                //     for (int i = 0; i < 1080; i += 100) {
+                //         int ij = getMillimetersDepth(depthImage, i, j);
+                //         dep.append(String.format("%5d ", ij));
+                //     }
+                //     dep.append("\n");
+                // }
+                // System.out.println(dep.toString() + "\n\n");
+//                System.out.printf("Depth is %d\n", d);
+                Log.d(TAG, "Depth is " + d);
+            } catch (NotYetAvailableException e) {
+                // This normally means that depth data is not available yet. This is normal so we will not
+                // spam the logcat with this.
+                Log.d(TAG, "depth image fail");
+            }
+        }
+
+        }
 
     @Override
     protected void onFailure(@NonNull Exception e) {
@@ -196,5 +266,17 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         double[][] line = {lineStart, lineEnd};
 
         return line;
+    }
+
+    public int getMillimetersDepth(Image depthImage, int x, int y) {
+        Image.Plane plane = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+            plane = depthImage.getPlanes()[0];
+            int byteIndex = x * plane.getPixelStride() + y * plane.getRowStride();
+            ByteBuffer buffer = plane.getBuffer().order(ByteOrder.nativeOrder());
+            short depthSample = buffer.getShort(byteIndex);
+            return depthSample;
+        }
+        return 0;
     }
 }

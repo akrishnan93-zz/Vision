@@ -66,6 +66,9 @@ dependencies {
     // Image labeling custom
     implementation 'com.google.mlkit:image-labeling-custom:16.1.0'
 
+    //AR CORE
+    implementation 'com.google.ar:core:1.23.0'
+
     // -------------------------------------------------------
 
     implementation 'com.google.code.gson:gson:2.8.5'

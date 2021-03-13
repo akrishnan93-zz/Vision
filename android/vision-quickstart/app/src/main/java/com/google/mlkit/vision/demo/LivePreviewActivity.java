@@ -41,6 +41,11 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.google.android.gms.common.annotation.KeepName;
+import com.google.ar.core.Session;
+import com.google.ar.core.exceptions.UnavailableApkTooOldException;
+import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
+import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.demo.automl.AutoMLImageLabelerProcessor;
 import com.google.mlkit.vision.demo.barcodescanner.BarcodeScannerProcessor;
@@ -79,6 +84,8 @@ public final class LivePreviewActivity extends AppCompatActivity
     private static final String AUTOML_LABELING = "AutoML Image Labeling";
     private static final String TAG = "LivePreviewActivity";
     private static final int PERMISSION_REQUESTS = 1;
+
+    public static Session session;
 
     private CameraSource cameraSource = null;
     private CameraSourcePreview preview;
@@ -190,6 +197,10 @@ public final class LivePreviewActivity extends AppCompatActivity
         startCameraSource();
     }
 
+    public Session getSession() {
+        return session;
+    }
+
     private void createCameraSource(String model) {
         // If there's no existing cameraSource, create one.
         if (cameraSource == null) {
@@ -290,6 +301,18 @@ public final class LivePreviewActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
+        try {
+            session = new Session(this);
+        } catch (UnavailableApkTooOldException e) {
+            e.printStackTrace();
+        } catch (UnavailableDeviceNotCompatibleException e) {
+            e.printStackTrace();
+        } catch (UnavailableArcoreNotInstalledException e) {
+            e.printStackTrace();
+        } catch (UnavailableSdkTooOldException e) {
+            e.printStackTrace();
+        }
+
         Log.d(TAG, "onResume");
         createCameraSource(selectedModel);
         startCameraSource();
