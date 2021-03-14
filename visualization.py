@@ -75,8 +75,8 @@ def initialize():
 	x_vals += np.random.randint(low = -40, high = 40, size = num_objects)
 	y_vals += np.random.randint(low = -40, high = 40, size = num_objects)
 
-	x_vals = np.random.randint(low = -90, high = 90, size = num_objects)
-	y_vals = np.random.randint(low = -90, high = 90, size = num_objects)
+	# x_vals = np.random.randint(low = -90, high = 90, size = num_objects)
+	# y_vals = np.random.randint(low = -90, high = 90, size = num_objects)
 	# point_color = np.random.uniform(low = 0, high = 1, size = (num_objects, 3))
 
 	x1, y1 = start
@@ -177,6 +177,9 @@ def AstarPath(rectangles):
 
 			next_cost = cost_so_far[(current_x, current_y)]
 			# next_cost += edge_weight(current_x, current_y, next_x, next_y) + 3
+
+			intersected = False
+
 			for i in range(15): # 25 iterations ahead
 
 				lookAheadX = next_x + x*i
@@ -185,7 +188,12 @@ def AstarPath(rectangles):
 
 				for rectangle in rectangles:
 					if rectangle.contains(lookAheadP):
-						next_cost += 100
+						next_cost += 5000
+						intersected = True
+						break
+
+				if intersected: break
+
 
 			if (next_x, next_y) not in cost_so_far or next_cost < cost_so_far[(next_x, next_y)]:
 				cost_so_far[(next_x, next_y)] = next_cost
@@ -333,7 +341,7 @@ def animate(i):
 
 initialize()
 
-ani = FuncAnimation(plt.gcf(), animate, interval = 1000)
+ani = FuncAnimation(plt.gcf(), animate, interval = 2000)
 
 plt.tight_layout()
 plt.show()
