@@ -32,6 +32,7 @@ import androidx.annotation.RequiresApi;
 
 import com.google.android.gms.tasks.Task;
 import com.google.ar.core.Anchor;
+import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.ArImage;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
@@ -45,6 +46,7 @@ import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.demo.GraphicOverlay;
@@ -121,7 +123,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         graphicOverlay.add(new ObjectGraphic(graphicOverlay, lineObject));
 
         Log.d(TAG, "" + LivePreviewActivity.session);
-        onDrawFrame();
+//        onDrawFrame();
 
         for (DetectedObject object : results) {
             setX(object);
@@ -140,7 +142,6 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         if (LivePreviewActivity.session == null) {
             return;
         }
-
 
         // Notify ARCore session that the view size changed so that the perspective matrix and
         // the video background can be properly adjusted.

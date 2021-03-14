@@ -41,10 +41,12 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.google.android.gms.common.annotation.KeepName;
+import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Session;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.demo.automl.AutoMLImageLabelerProcessor;
@@ -96,6 +98,7 @@ public final class LivePreviewActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
+        Log.d(TAG, "" + isARCoreSupportedAndUpToDate());
 
         setContentView(R.layout.activity_live_preview);
 
@@ -143,6 +146,45 @@ public final class LivePreviewActivity extends AppCompatActivity
         } else {
             getRuntimePermissions();
         }
+    }
+
+    private boolean isARCoreSupportedAndUpToDate() {
+        ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
+        switch (availability) {
+            case SUPPORTED_INSTALLED:
+                return true;
+
+            case SUPPORTED_APK_TOO_OLD:
+            case SUPPORTED_NOT_INSTALLED:
+                try {
+                    // Request ARCore installation or update if needed.
+                    ArCoreApk.InstallStatus installStatus = ArCoreApk.getInstance().requestInstall(this, true);
+                    switch (installStatus) {
+                        case INSTALL_REQUESTED:
+                            Log.i(TAG, "ARCore installation requested.");
+                            return false;
+                        case INSTALLED:
+                            return true;
+                    }
+                } catch (UnavailableException e) {
+                    Log.e(TAG, "ARCore not installed", e);
+                }
+                return false;
+
+            case UNSUPPORTED_DEVICE_NOT_CAPABLE:
+                // This device is not supported for AR.
+                return false;
+
+            case UNKNOWN_CHECKING:
+                // ARCore is checking the availability with a remote query.
+                // This function should be called again after waiting 200 ms to determine the query result.
+            case UNKNOWN_ERROR:
+            case UNKNOWN_TIMED_OUT:
+                // There was an error checking for AR availability. This may be due to the device being offline.
+                // Handle the error appropriately.
+        }
+
+        return false;
     }
 
     @Override
