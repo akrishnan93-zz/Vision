@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.google.mlkit.vision.demo"
-        minSdkVersion 16
+        minSdkVersion 24
         multiDexEnabled true
         targetSdkVersion 29
 
@@ -65,6 +65,9 @@ dependencies {
 
     // Image labeling custom
     implementation 'com.google.mlkit:image-labeling-custom:16.1.0'
+
+    //AR CORE
+    implementation 'com.google.ar:core:1.23.0'
 
     // -------------------------------------------------------
 
