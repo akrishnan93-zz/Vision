@@ -16,6 +16,8 @@
 
 package com.google.ar.core.examples.java.helloar;
 
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -25,6 +27,7 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -82,12 +85,20 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.ObjectDetection;
 import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
+import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions;
+import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
 
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -191,7 +202,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
     MyARCanvas myARCanvas;
     ObjectDetectorOptions options;
-    ObjectDetector objectDetector;
+    private ObjectDetector objectDetector;
 
     // Verify that ARCore is installed and using the current version.
     private boolean isARCoreSupportedAndUpToDate() {
@@ -273,7 +284,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 new ObjectDetectorOptions.Builder()
                         .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
                         .enableMultipleObjects()
-                        .enableClassification()  // Optional
+//                        .enableClassification()  // Optional
                         .build();
 
 
@@ -376,6 +387,34 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
         surfaceView.onResume();
         displayRotationHelper.onResume();
+    }
+
+    private void storeImage(Image image) throws IOException {
+        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        // path to /data/data/yourapp/app_data/imageDir
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        // Create imageDir
+        File mypath=new File(directory,"profile.jpg");
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            // Use the compress method on the BitMap object to write image to the OutputStream
+            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -573,11 +612,15 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 && (depthSettings.useDepthForOcclusion()
                 || depthSettings.depthColorVisualizationEnabled())) {
             try (Image rawImage = frame.acquireCameraImage()) {
-                InputImage image = InputImage.fromMediaImage(rawImage, 0);
-
-                objectDetector.process(image)
-                        .addOnSuccessListener(detectedObjects -> System.out.println("tits"))
-                        .addOnFailureListener(e -> System.out.println("object detection failed"));
+                if(rawImage == null) {
+                    System.out.println("we are fucked");
+                } else {
+                    InputImage image = InputImage.fromMediaImage(rawImage, 0);
+                    objectDetector.process(image)
+                            .addOnSuccessListener(detectedObjects -> System.out.println("tits"))
+                            .addOnFailureListener(e -> System.out.println(e));
+                    rawImage.close();
+                }
 
             } catch (NotYetAvailableException e) {
                 // This normally means that depth data is not available yet. This is normal so we will not

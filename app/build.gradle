@@ -27,12 +27,26 @@ android {
 dependencies {
     // ARCore (Google Play Services for AR) library.
     implementation 'com.google.ar:core:1.23.0'
-    implementation 'com.google.mlkit:object-detection:16.2.3'
+//    implementation 'com.google.mlkit:object-detection:16.2.3'
 
     // Obj - a simple Wavefront OBJ file loader
     // https://github.com/javagl/Obj
     implementation 'de.javagl:obj:0.2.1'
 
+    // Image labeling with automl model support
+    implementation 'com.google.mlkit:image-labeling-automl:16.1.0'
+
+    // Image labeling
+    implementation 'com.google.mlkit:image-labeling:16.1.0'
+
+    // Image labeling custom
+    implementation 'com.google.mlkit:image-labeling-custom:16.1.0'
+    implementation 'com.google.mlkit:object-detection-custom:16.1.0'
+
+    // Object detection feature with bundled default classifier
+    implementation 'com.google.mlkit:object-detection:16.1.0'
+
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.google.android.material:material:1.1.0'
+
 }
