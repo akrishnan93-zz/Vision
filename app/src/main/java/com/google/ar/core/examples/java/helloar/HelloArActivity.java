@@ -33,9 +33,12 @@ import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
@@ -79,6 +82,11 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.objects.DetectedObject;
+import com.google.mlkit.vision.objects.ObjectDetection;
+import com.google.mlkit.vision.objects.ObjectDetector;
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -182,6 +190,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     private final float[] viewLightDirection = new float[4]; // view x world light direction
 
     MyARCanvas myARCanvas;
+    ObjectDetectorOptions options;
+    ObjectDetector objectDetector;
 
     // Verify that ARCore is installed and using the current version.
     private boolean isARCoreSupportedAndUpToDate() {
@@ -257,6 +267,17 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                     }
                 });
         // setContentView(myARCanvas);
+
+        // Multiple object detection in static images
+        options =
+                new ObjectDetectorOptions.Builder()
+                        .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+                        .enableMultipleObjects()
+                        .enableClassification()  // Optional
+                        .build();
+
+
+        objectDetector = ObjectDetection.getClient(options);
     }
 
     /**
@@ -552,6 +573,11 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 && (depthSettings.useDepthForOcclusion()
                 || depthSettings.depthColorVisualizationEnabled())) {
             try (Image rawImage = frame.acquireCameraImage()) {
+                InputImage image = InputImage.fromMediaImage(rawImage, 0);
+
+                objectDetector.process(image)
+                        .addOnSuccessListener(detectedObjects -> System.out.println("tits"))
+                        .addOnFailureListener(e -> System.out.println("object detection failed"));
 
             } catch (NotYetAvailableException e) {
                 // This normally means that depth data is not available yet. This is normal so we will not
