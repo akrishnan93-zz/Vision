@@ -123,7 +123,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
         graphicOverlay.add(new ObjectGraphic(graphicOverlay, lineObject));
 
         Log.d(TAG, "" + LivePreviewActivity.session);
-//        onDrawFrame();
+        onDrawFrame();
 
         for (DetectedObject object : results) {
             setX(object);
@@ -180,7 +180,7 @@ public class ObjectDetectorProcessor extends VisionProcessorBase<List<DetectedOb
             }
         }
 
-        }
+    }
 
     @Override
     protected void onFailure(@NonNull Exception e) {
