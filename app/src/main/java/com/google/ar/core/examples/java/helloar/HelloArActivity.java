@@ -76,6 +76,7 @@ import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 
@@ -182,6 +183,46 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
     MyARCanvas myARCanvas;
 
+    // Verify that ARCore is installed and using the current version.
+    private boolean isARCoreSupportedAndUpToDate() {
+        ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
+        switch (availability) {
+            case SUPPORTED_INSTALLED:
+                return true;
+
+            case SUPPORTED_APK_TOO_OLD:
+            case SUPPORTED_NOT_INSTALLED:
+                try {
+                    // Request ARCore installation or update if needed.
+                    ArCoreApk.InstallStatus installStatus = ArCoreApk.getInstance().requestInstall(this, true);
+                    switch (installStatus) {
+                        case INSTALL_REQUESTED:
+                            Log.i(TAG, "ARCore installation requested.");
+                            return false;
+                        case INSTALLED:
+                            return true;
+                    }
+                } catch (UnavailableException e) {
+                    Log.e(TAG, "ARCore not installed", e);
+                }
+                return false;
+
+            case UNSUPPORTED_DEVICE_NOT_CAPABLE:
+                // This device is not supported for AR.
+                return false;
+
+            case UNKNOWN_CHECKING:
+                // ARCore is checking the availability with a remote query.
+                // This function should be called again after waiting 200 ms to determine the query result.
+            case UNKNOWN_ERROR:
+            case UNKNOWN_TIMED_OUT:
+                // There was an error checking for AR availability. This may be due to the device being offline.
+                // Handle the error appropriately.
+        }
+
+        return false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -192,6 +233,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         // Set up touch listener.
         tapHelper = new TapHelper(/*context=*/ this);
         surfaceView.setOnTouchListener(tapHelper);
+        Log.d("HelloArActivity", "" + isARCoreSupportedAndUpToDate());
 
         // Set up renderer.
         render = new SampleRender(surfaceView, this, getAssets());
@@ -509,10 +551,17 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         if (camera.getTrackingState() == TrackingState.TRACKING
                 && (depthSettings.useDepthForOcclusion()
                 || depthSettings.depthColorVisualizationEnabled())) {
+            try (Image rawImage = frame.acquireCameraImage()) {
+
+            } catch (NotYetAvailableException e) {
+                // This normally means that depth data is not available yet. This is normal so we will not
+                // spam the logcat with this.
+            }
+
             try (Image depthImage = frame.acquireDepthImage()) {
                 backgroundRenderer.updateCameraDepthTexture(depthImage);
                 int d = getMillimetersDepth(depthImage, 0, 0);
-                StringBuilder dep = new StringBuilder();
+//                StringBuilder dep = new StringBuilder();
                 //w=1440 h=3120
                 // for (int j = 0; j < 1920; j += 100) {
                 //     for (int i = 0; i < 1080; i += 100) {
@@ -521,13 +570,36 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 //     }
                 //     dep.append("\n");
                 // }
-                // System.out.println(dep.toString() + "\n\n");
+//                 System.out.println(dep.toString() + "\n\n");
                 System.out.printf("Depth is %d\n", d);
             } catch (NotYetAvailableException e) {
                 // This normally means that depth data is not available yet. This is normal so we will not
                 // spam the logcat with this.
             }
         }
+
+//        if (camera.getTrackingState() == TrackingState.TRACKING
+//                && (depthSettings.useDepthForOcclusion()
+//                || depthSettings.depthColorVisualizationEnabled())) {
+//            try (Image depthImage = frame.acquireDepthImage()) {
+//                backgroundRenderer.updateCameraDepthTexture(depthImage);
+//                int d = getMillimetersDepth(depthImage, 0, 0);
+//                StringBuilder dep = new StringBuilder();
+//                //w=1440 h=3120
+//                // for (int j = 0; j < 1920; j += 100) {
+//                //     for (int i = 0; i < 1080; i += 100) {
+//                //         int ij = getMillimetersDepth(depthImage, i, j);
+//                //         dep.append(String.format("%5d ", ij));
+//                //     }
+//                //     dep.append("\n");
+//                // }
+//                // System.out.println(dep.toString() + "\n\n");
+//                System.out.printf("Depth is %d\n", d);
+//            } catch (NotYetAvailableException e) {
+//                // This normally means that depth data is not available yet. This is normal so we will not
+//                // spam the logcat with this.
+//            }
+//        }
 
         // Handle one tap per frame.
         handleTap(frame, camera);
