@@ -19,6 +19,7 @@ package com.google.ar.core.examples.java.helloar;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -284,11 +285,57 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 new ObjectDetectorOptions.Builder()
                         .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
                         .enableMultipleObjects()
-//                        .enableClassification()  // Optional
+                        .enableClassification()  // Optional
                         .build();
 
 
         objectDetector = ObjectDetection.getClient(options);
+
+        AssetManager assetManager = this.getAssets();
+        InputStream istr = null;
+
+        try {
+            istr = assetManager.open("example.jpg");
+        } catch (IOException e) {
+            System.out.println("shits null0: " + e.toString());
+        }
+
+        if (istr != null) {
+            Bitmap bitmap = BitmapFactory.decodeStream(istr);
+
+            try {
+                istr.close();
+            } catch (IOException e) {
+                System.out.println("shits null1");
+            }
+
+            InputImage image = InputImage.fromBitmap(bitmap, 0);
+
+            objectDetector.process(image)
+                    .addOnSuccessListener(
+                            detectedObjects -> {
+                                System.out.println("SIZE: " + detectedObjects.size());
+                                for (DetectedObject detectedObject : detectedObjects) {
+                                    Rect boundingBox = detectedObject.getBoundingBox();
+                                    Integer trackingId = detectedObject.getTrackingId();
+
+                                    System.out.println("SIZE2: " + detectedObject.getLabels().size());
+                                    for (DetectedObject.Label label : detectedObject.getLabels()) {
+                                        String text = label.getText();
+                                        int index = label.getIndex();
+                                        float confidence = label.getConfidence();
+                                        System.out.println("LABELS: ");
+                                        System.out.println(text + " - " + index + " - " + confidence);
+                                    }
+                                }
+                            })
+                    .addOnFailureListener(
+                            e -> {
+                                System.out.println("fucked boys");
+                            });
+        } else {
+            System.out.println("shits null2");
+        }
     }
 
     /**
@@ -611,21 +658,22 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         if (camera.getTrackingState() == TrackingState.TRACKING
                 && (depthSettings.useDepthForOcclusion()
                 || depthSettings.depthColorVisualizationEnabled())) {
-            try (Image rawImage = frame.acquireCameraImage()) {
-                if(rawImage == null) {
-                    System.out.println("we are fucked");
-                } else {
-                    InputImage image = InputImage.fromMediaImage(rawImage, 0);
-                    objectDetector.process(image)
-                            .addOnSuccessListener(detectedObjects -> System.out.println("tits"))
-                            .addOnFailureListener(e -> System.out.println(e));
-                    rawImage.close();
-                }
 
-            } catch (NotYetAvailableException e) {
-                // This normally means that depth data is not available yet. This is normal so we will not
-                // spam the logcat with this.
-            }
+//            try (Image rawImage = frame.acquireCameraImage()) {
+//                if(rawImage == null) {
+//                    System.out.println("we are fucked");
+//                } else {
+//                    InputImage image = InputImage.fromMediaImage(rawImage, 0);
+//                    objectDetector.process(image)
+//                            .addOnSuccessListener(detectedObjects -> System.out.println("tits"))
+//                            .addOnFailureListener(e -> System.out.println(e));
+//                    rawImage.close();
+//                }
+//
+//            } catch (NotYetAvailableException e) {
+//                // This normally means that depth data is not available yet. This is normal so we will not
+//                // spam the logcat with this.
+//            }
 
             try (Image depthImage = frame.acquireDepthImage()) {
                 backgroundRenderer.updateCameraDepthTexture(depthImage);
