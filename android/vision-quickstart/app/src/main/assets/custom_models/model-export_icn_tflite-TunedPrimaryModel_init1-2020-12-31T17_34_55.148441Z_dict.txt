@@ -1,8 +1,0 @@
-Chair
-Bus
-Car
-Bench
-Person
-Stairs
-Motorcycle
-Tree
