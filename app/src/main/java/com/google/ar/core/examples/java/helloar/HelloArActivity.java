@@ -41,6 +41,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
@@ -102,13 +113,19 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import android.graphics.*;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -319,6 +336,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
         super.onDestroy();
     }
+
 
     @Override
     protected void onResume() {
@@ -608,6 +626,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         // BackgroundRenderer.updateDisplayGeometry must be called every frame to update the coordinates
         // used to draw the background camera image.
         backgroundRenderer.updateDisplayGeometry(frame);
+        byte[] image_arr = null;
 
         if (camera.getTrackingState() == TrackingState.TRACKING
                 && (depthSettings.useDepthForOcclusion()
@@ -635,24 +654,63 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                             System.out.println("shits null1");
                         }
 
-//                        ByteBuffer buffer = rawImage.getPlanes()[0].getBuffer();
-//                        byte[] bytes = new byte[buffer.capacity()];
-//                        buffer.get(bytes);
+                        ByteBuffer buffer = rawImage.getPlanes()[0].getBuffer();
+                        byte[] data_0 = new byte[buffer.capacity()];
+                        buffer.get(data_0);
+
+                        buffer = rawImage.getPlanes()[1].getBuffer();
+                        byte[] data_1 = new byte[buffer.capacity()];
+                        buffer.get(data_1);
+
+                        buffer = rawImage.getPlanes()[2].getBuffer();
+                        byte[] data_2 = new byte[buffer.capacity()];
+                        buffer.get(data_2);
+
+//                        System.out.println("h: " + data_0.length + " " + data_1.length + " " + data_2.length);
+//                        System.out.println("h: " + rawImage.getHeight() + "w " + rawImage.getWidth());
+
+                        int width = rawImage.getWidth();
+                        int height = rawImage.getHeight();
+
+                        int alpha = 1; // change alpha as necessary
+
+                        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                        bmp.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+                        image_arr = stream.toByteArray();
+
+                        for(int x=0; x<width; x++) {
+                            for(int y=0; y<height; y++) {
+                                int red = data_0[0];
+                                int green = data_1[0];
+                                int blue = data_2[0];
+
+                                int color = Color.argb(alpha, red, green, blue);
+
+                                bmp.setPixel(x, y, color);
+                            }
+                        }
+
+//                        System.out.println("bytes" + Arrays.toString(bytes));
+//                        System.out.println("test" + bitmap.getPixel(0, 0));
+
 //                        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
 
 //                        InputImage image = InputImage.fromBitmap(bitmap, 0);
-                        InputImage image = InputImage.fromMediaImage(rawImage, 0);
-
+                        InputImage image = InputImage.fromBitmap(bmp, 0);
 
                         objectDetector.process(image)
                                 .addOnSuccessListener(
                                         detectedObjects -> {
-//                                            System.out.println("SIZE: " + detectedObjects.size());
                                             for (DetectedObject detectedObject : detectedObjects) {
                                                 Rect boundingBox = detectedObject.getBoundingBox();
                                                 Integer trackingId = detectedObject.getTrackingId();
 
-//                                                System.out.println("SIZE2: " + detectedObject.getLabels().size());
+                                                System.out.println("l:" + boundingBox.left + " r:" +
+                                                        boundingBox.right + " b:" + boundingBox.bottom +
+                                                        " t:" + boundingBox.top);
+
                                                 for (DetectedObject.Label label : detectedObject.getLabels()) {
                                                     String text = label.getText();
                                                     int index = label.getIndex();
@@ -676,24 +734,87 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 // spam the logcat with this.
             }
 
-//            try (Image depthImage = frame.acquireDepthImage()) {
-//                backgroundRenderer.updateCameraDepthTexture(depthImage);
-//                int d = getMillimetersDepth(depthImage, 0, 0);
-////                StringBuilder dep = new StringBuilder();
-//                //w=1440 h=3120
-//                // for (int j = 0; j < 1920; j += 100) {
-//                //     for (int i = 0; i < 1080; i += 100) {
-//                //         int ij = getMillimetersDepth(depthImage, i, j);
-//                //         dep.append(String.format("%5d ", ij));
-//                //     }
-//                //     dep.append("\n");
-//                // }
-////                 System.out.println(dep.toString() + "\n\n");
-//                System.out.printf("Depth is %d\n", d);
-//            } catch (NotYetAvailableException e) {
-//                // This normally means that depth data is not available yet. This is normal so we will not
-//                // spam the logcat with this.
-//            }
+            try (Image depthImage = frame.acquireDepthImage()) {
+                backgroundRenderer.updateCameraDepthTexture(depthImage);
+
+                StringBuilder dep = new StringBuilder();
+                dep.append("[");
+                for (int i = 0; i < depthImage.getHeight(); ++i) {
+                    dep.append("[");
+
+                    for (int j = 0; j < depthImage.getWidth(); ++j) {
+                        int depth_ji = getMillimetersDepth(depthImage, j, i);
+                        dep.append(depth_ji);
+                        if (j + 1 != depthImage.getWidth()) {
+                            dep.append(", ");
+                        }
+                    }
+                    dep.append("]");
+                    if (i + 1 != depthImage.getHeight()) {
+                        dep.append(", ");
+                    }
+                }
+                dep.append("]");
+
+                String depths = dep.toString();
+//                System.out.println("depths: " +  depths.substring(0, 10) + " "+ depths.substring(depths.length() - 10));
+
+                RequestQueue requestQueue = Volley.newRequestQueue(this);
+                String URL = "https://visionapis.herokuapp.com/test-array";
+
+                System.out.println(Arrays.toString(image_arr));
+                System.out.println("len" + image_arr.length);
+
+                final String requestBody = "\"" + depths + "\"";
+
+                StringRequest stringRequest = new StringRequest(Request.Method.POST, URL,
+                        new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                Log.d("VOLLEY", response);
+                            }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("VOLLEY", "error" + error.toString());
+                        System.out.println("error" + error.toString());
+                    }
+                }) {
+                    @Override
+                    public String getBodyContentType() {
+                        return "application/json; charset=utf-8";
+                    }
+
+                    @Override
+                    public byte[] getBody() throws AuthFailureError {
+                        try {
+                            return requestBody.getBytes("utf-8");
+                        } catch (UnsupportedEncodingException uee) {
+                            VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    protected Response<String> parseNetworkResponse(NetworkResponse response) {
+                        String responseString = "";
+                        if (response != null) {
+                            responseString = String.valueOf(response.statusCode);
+                            // can get more details such as response.headers
+                        }
+//                        return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+                        return super.parseNetworkResponse(response);
+                    }
+                };
+
+                requestQueue.add(stringRequest);
+
+            }
+
+            catch (NotYetAvailableException e) {
+                // This normally means that depth data is not available yet. This is normal so we will not
+                // spam the logcat with this.
+            }
         }
 
 //        if (camera.getTrackingState() == TrackingState.TRACKING
@@ -718,6 +839,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //                // spam the logcat with this.
 //            }
 //        }
+
+
 
         // Handle one tap per frame.
         handleTap(frame, camera);
