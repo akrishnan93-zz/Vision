@@ -58,19 +58,19 @@ uniform vec3 u_LightIntensity;
 // The direction of the main directional light in view space.
 uniform vec4 u_ViewLightDirection;
 
-// The coefficients for the spherical harmonic function which models the diffuse
+// The coefficients for the spherical harmonic function which com.google.ar.core.examples.java.models the diffuse
 // irradiance of a distant environmental light for a given surface normal in
 // world space. These coefficients must be premultiplied with their
 // corresponding spherical harmonics constants. See
 // HelloArActivity.updateSphericalHarmonicsCoefficients for more information.
 uniform vec3 u_SphericalHarmonicsCoefficients[9];
 
-// The filtered cubemap texture which models the LD term (i.e. radiance (L)
+// The filtered cubemap texture which com.google.ar.core.examples.java.models the LD term (i.e. radiance (L)
 // times distribution function (D)) of the environmental specular calculation as
 // a function of direction and roughness.
 uniform samplerCube u_Cubemap;
 
-// The DFG lookup texture which models the DFG1 and DFG2 terms of the
+// The DFG lookup texture which com.google.ar.core.examples.java.models the DFG1 and DFG2 terms of the
 // environmental specular calculation as a function of normal dot view and
 // perceptual roughness.
 uniform sampler2D u_DfgTexture;

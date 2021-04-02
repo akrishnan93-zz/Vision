@@ -16,19 +16,17 @@
 
 package com.google.ar.core.examples.java.helloar;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.media.Image;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -37,7 +35,6 @@ import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -48,12 +45,8 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.HttpHeaderParser;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
@@ -89,6 +82,9 @@ import com.google.ar.core.examples.java.common.samplerender.VertexBuffer;
 import com.google.ar.core.examples.java.common.samplerender.arcore.BackgroundRenderer;
 import com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer;
 import com.google.ar.core.examples.java.common.samplerender.arcore.SpecularCubemapFilter;
+import com.google.ar.core.examples.java.models.APIModel;
+import com.google.ar.core.examples.java.network.GetDataService;
+import com.google.ar.core.examples.java.network.RetrofitClientInstance;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
@@ -97,26 +93,21 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
-import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.ObjectDetection;
 import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
-import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions;
-import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
 
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -124,8 +115,8 @@ import java.util.List;
 
 import android.graphics.*;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import retrofit2.Call;
+import retrofit2.Callback;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -222,6 +213,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     ObjectDetectorOptions options;
     private ObjectDetector objectDetector;
 
+    ProgressDialog progressDialog;
+
     // Verify that ARCore is installed and using the current version.
     private boolean isARCoreSupportedAndUpToDate() {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
@@ -307,7 +300,30 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
 
         objectDetector = ObjectDetection.getClient(options);
+
+        // Network shit
+        progressDialog = new ProgressDialog(MainActivity.this);
+        progressDialog.setMessage("Loading....");
+        progressDialog.show();
+
+
+        GetDataService service = RetrofitClientInstance.getRetrofitInstance().create(GetDataService.class);
+        Call<List<APIModel>> call = service.doTestCall();
+        call.enqueue(new Callback<List<APIModel>>() {
+            @Override
+            public void onResponse(Call<List<APIModel>> call, retrofit2.Response<List<APIModel>> response) {
+                progressDialog.dismiss();
+                System.out.println("Piece of resp: " + response.body());
+            }
+
+            @Override
+            public void onFailure(Call<List<APIModel>> call, Throwable t) {
+                progressDialog.dismiss();
+                System.out.println("Stupid thing failed");
+            }
+        });
     }
+
 
     /**
      * Menu button to launch feature specific settings.
@@ -418,7 +434,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         // path to /data/data/yourapp/app_data/imageDir
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
         // Create imageDir
-        File mypath=new File(directory,"profile.jpg");
+        File mypath = new File(directory, "profile.jpg");
 
         FileOutputStream fos = null;
         try {
@@ -633,7 +649,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 || depthSettings.depthColorVisualizationEnabled())) {
 
             try (Image rawImage = frame.acquireCameraImage()) {
-                if(rawImage == null) {
+                if (rawImage == null) {
                     System.out.println("we are fucked");
                 } else {
                     AssetManager assetManager = this.getAssets();
@@ -680,8 +696,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //                        bmp.compress(Bitmap.CompressFormat.JPEG, 70, stream);
                         image_arr = stream.toByteArray();
 
-                        for(int x=0; x<width; x++) {
-                            for(int y=0; y<height; y++) {
+                        for (int x = 0; x < width; x++) {
+                            for (int y = 0; y < height; y++) {
                                 int red = data_0[0];
                                 int green = data_1[0];
                                 int blue = data_2[0];
@@ -773,7 +789,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                             public void onResponse(String response) {
                                 Log.d("VOLLEY", response);
                             }
-                }, new Response.ErrorListener() {
+                        }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e("VOLLEY", "error" + error.toString());
@@ -809,9 +825,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
                 requestQueue.add(stringRequest);
 
-            }
-
-            catch (NotYetAvailableException e) {
+            } catch (NotYetAvailableException e) {
                 // This normally means that depth data is not available yet. This is normal so we will not
                 // spam the logcat with this.
             }
@@ -839,7 +853,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //                // spam the logcat with this.
 //            }
 //        }
-
 
 
         // Handle one tap per frame.
