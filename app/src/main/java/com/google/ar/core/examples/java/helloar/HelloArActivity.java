@@ -35,6 +35,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -295,7 +296,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                         popup.show();
                     }
                 });
-        // setContentView(myARCanvas);
+//       // setContentView(myARCanvas);
 
         // Multiple object detection in static images
         options =
@@ -626,7 +627,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         // BackgroundRenderer.updateDisplayGeometry must be called every frame to update the coordinates
         // used to draw the background camera image.
         backgroundRenderer.updateDisplayGeometry(frame);
-        byte[] image_arr = null;
+        Bitmap bmp = null;
 
         if (camera.getTrackingState() == TrackingState.TRACKING
                 && (depthSettings.useDepthForOcclusion()
@@ -654,17 +655,17 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                             System.out.println("shits null1");
                         }
 
-                        ByteBuffer buffer = rawImage.getPlanes()[0].getBuffer();
-                        byte[] data_0 = new byte[buffer.capacity()];
-                        buffer.get(data_0);
-
-                        buffer = rawImage.getPlanes()[1].getBuffer();
-                        byte[] data_1 = new byte[buffer.capacity()];
-                        buffer.get(data_1);
-
-                        buffer = rawImage.getPlanes()[2].getBuffer();
-                        byte[] data_2 = new byte[buffer.capacity()];
-                        buffer.get(data_2);
+//                        ByteBuffer buffer = rawImage.getPlanes()[0].getBuffer();
+//                        byte[] data_0 = new byte[buffer.capacity()];
+//                        buffer.get(data_0);
+//
+//                        buffer = rawImage.getPlanes()[1].getBuffer();
+//                        byte[] data_1 = new byte[buffer.capacity()];
+//                        buffer.get(data_1);
+//
+//                        buffer = rawImage.getPlanes()[2].getBuffer();
+//                        byte[] data_2 = new byte[buffer.capacity()];
+//                        buffer.get(data_2);
 
 //                        System.out.println("h: " + data_0.length + " " + data_1.length + " " + data_2.length);
 //                        System.out.println("h: " + rawImage.getHeight() + "w " + rawImage.getWidth());
@@ -674,23 +675,47 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
                         int alpha = 1; // change alpha as necessary
 
-                        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+//                        bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//                        bmp.compress(Bitmap.CompressFormat.JPEG, 70, stream);
-                        image_arr = stream.toByteArray();
+//                        ByteBuffer buffer_final = rawImage.getPlanes()[0].getBuffer();
+//                        byte[] bytes = new byte[buffer.remaining()];
+//                        buffer_final.get(bytes);
+//                        bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
 
-                        for(int x=0; x<width; x++) {
-                            for(int y=0; y<height; y++) {
-                                int red = data_0[0];
-                                int green = data_1[0];
-                                int blue = data_2[0];
+//                        StringBuilder pixels = new StringBuilder();
+//                        pixels.append("[");
+//                        for (int i = 0; i < bmp.getHeight(); ++i) {
+//                            pixels.append("[");
+//
+//                            for (int j = 0; j < bmp.getWidth(); ++j) {
+//                                int pixels_ji = bmp.getPixel(j, i);
+//                                pixels.append(pixels_ji);
+//                                if (j + 1 != bmp.getWidth()) {
+//                                    pixels.append(", ");
+//                                }
+//                            }
+//                            pixels.append("]");
+//                            if (i + 1 != bmp.getHeight()) {
+//                                pixels.append(", ");
+//                            }
+//                        }
+//                        pixels.append("]");
+//
+//                        System.out.println("bmp: " + pixels.toString());
 
-                                int color = Color.argb(alpha, red, green, blue);
+//                        for(int x=0; x<width; x++) {
+//                            for(int y=0; y<height; y++) {
+//                                int red = data_0[0];
+//                                int green = data_1[0];
+//                                int blue = data_2[0];
+//
+//                                int color = Color.argb(alpha, red, green, blue);
+//
+//                                bmp.setPixel(x, y, color);
+//                            }
+//                        }
 
-                                bmp.setPixel(x, y, color);
-                            }
-                        }
+
 
 //                        System.out.println("bytes" + Arrays.toString(bytes));
 //                        System.out.println("test" + bitmap.getPixel(0, 0));
@@ -698,32 +723,36 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //                        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
 
 //                        InputImage image = InputImage.fromBitmap(bitmap, 0);
-                        InputImage image = InputImage.fromBitmap(bmp, 0);
+//                        InputImage image = InputImage.fromBitmap(bmp, 0);
+//                        System.out.println("image h " + rawImage.getHeight());
+//                        System.out.println("image w " + rawImage.getWidth());
+//                        System.out.println("bm h " + bmp.getHeight());
+//                        System.out.println("bm w " + bmp.getWidth());
 
-                        objectDetector.process(image)
-                                .addOnSuccessListener(
-                                        detectedObjects -> {
-                                            for (DetectedObject detectedObject : detectedObjects) {
-                                                Rect boundingBox = detectedObject.getBoundingBox();
-                                                Integer trackingId = detectedObject.getTrackingId();
-
-                                                System.out.println("l:" + boundingBox.left + " r:" +
-                                                        boundingBox.right + " b:" + boundingBox.bottom +
-                                                        " t:" + boundingBox.top);
-
-                                                for (DetectedObject.Label label : detectedObject.getLabels()) {
-                                                    String text = label.getText();
-                                                    int index = label.getIndex();
-                                                    float confidence = label.getConfidence();
-//                                                    System.out.println("LABELS: ");
-//                                                    System.out.println(text + " - " + index + " - " + confidence);
-                                                }
-                                            }
-                                        })
-                                .addOnFailureListener(
-                                        e -> {
-                                            System.out.println("fucked boys");
-                                        });
+//                        objectDetector.process(image)
+//                                .addOnSuccessListener(
+//                                        detectedObjects -> {
+//                                            for (DetectedObject detectedObject : detectedObjects) {
+//                                                Rect boundingBox = detectedObject.getBoundingBox();
+//                                                Integer trackingId = detectedObject.getTrackingId();
+//
+//                                                System.out.println("l:" + boundingBox.left + " r:" +
+//                                                        boundingBox.right + " b:" + boundingBox.bottom +
+//                                                        " t:" + boundingBox.top);
+//
+//                                                for (DetectedObject.Label label : detectedObject.getLabels()) {
+//                                                    String text = label.getText();
+//                                                    int index = label.getIndex();
+//                                                    float confidence = label.getConfidence();
+////                                                    System.out.println("LABELS: ");
+////                                                    System.out.println(text + " - " + index + " - " + confidence);
+//                                                }
+//                                            }
+//                                        })
+//                                .addOnFailureListener(
+//                                        e -> {
+//                                            System.out.println("fucked boys");
+//                                        });
                     } else {
                         System.out.println("shits null2");
                     }
@@ -737,81 +766,104 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
             try (Image depthImage = frame.acquireDepthImage()) {
                 backgroundRenderer.updateCameraDepthTexture(depthImage);
 
-                StringBuilder dep = new StringBuilder();
-                dep.append("[");
-                for (int i = 0; i < depthImage.getHeight(); ++i) {
-                    dep.append("[");
+//                StringBuilder dep = new StringBuilder();
+//                dep.append("[");
+//                for (int i = 0; i < depthImage.getHeight(); ++i) {
+//                    dep.append("[");
+//
+//                    for (int j = 0; j < depthImage.getWidth(); ++j) {
+//                        int depth_ji = getMillimetersDepth(depthImage, j, i);
+//                        dep.append(depth_ji);
+//                        if (j + 1 != depthImage.getWidth()) {
+//                            dep.append(", ");
+//                        }
+//                    }
+//                    dep.append("]");
+//                    if (i + 1 != depthImage.getHeight()) {
+//                        dep.append(", ");
+//                    }
+//                }
+//                dep.append("]");
+//
+//                StringBuilder pixels = new StringBuilder();
+//                pixels.append("[");
+//                for (int i = 0; i < bmp.getHeight(); ++i) {
+//                    pixels.append("[");
+//
+//                    for (int j = 0; j < bmp.getWidth(); ++j) {
+//                        int pixels_ji = bmp.getPixel(j, i);
+//                        pixels.append(pixels_ji);
+//                        if (j + 1 != bmp.getWidth()) {
+//                            pixels.append(", ");
+//                        }
+//                    }
+//                    pixels.append("]");
+//                    if (i + 1 != bmp.getHeight()) {
+//                        pixels.append(", ");
+//                    }
+//                }
+//                pixels.append("]");
 
-                    for (int j = 0; j < depthImage.getWidth(); ++j) {
-                        int depth_ji = getMillimetersDepth(depthImage, j, i);
-                        dep.append(depth_ji);
-                        if (j + 1 != depthImage.getWidth()) {
-                            dep.append(", ");
-                        }
-                    }
-                    dep.append("]");
-                    if (i + 1 != depthImage.getHeight()) {
-                        dep.append(", ");
-                    }
+//                String depths = dep.toString();
+//                String bmpPixels = pixels.toString();
+////                System.out.println("depths: " +  depths.substring(0, 10) + " "+ depths.substring(depths.length() - 10));
+//
+//                RequestQueue requestQueue = Volley.newRequestQueue(this);
+//                String URL = "https://visionapis.herokuapp.com/test-array";
+////                System.out.println(bmpPixels);
+//
+//                final String requestBody = "\"" + bmpPixels + "\"" + "\"" + depths + "\"";
+//
+//                StringRequest stringRequest = new StringRequest(Request.Method.POST, URL,
+//                        new Response.Listener<String>() {
+//                            @Override
+//                            public void onResponse(String response) {
+//                                Log.d("VOLLEY", response);
+//                            }
+//                }, new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        Log.e("VOLLEY", "error" + error.toString());
+//                        System.out.println("error" + error.toString());
+//                    }
+//                }) {
+//                    @Override
+//                    public String getBodyContentType() {
+//                        return "application/json; charset=utf-8";
+//                    }
+//
+//                    @Override
+//                    public byte[] getBody() throws AuthFailureError {
+//                        try {
+//                            return requestBody.getBytes("utf-8");
+//                        } catch (UnsupportedEncodingException uee) {
+//                            VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
+//                            return null;
+//                        }
+//                    }
+//
+//                    @Override
+//                    protected Response<String> parseNetworkResponse(NetworkResponse response) {
+//                        String responseString = "";
+//                        if (response != null) {
+//                            responseString = String.valueOf(response.statusCode);
+//                            // can get more details such as response.headers
+//                        }
+////                        return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+//                        return super.parseNetworkResponse(response);
+//                    }
+//                };
+//
+//                requestQueue.add(stringRequest);
+                final int mmToFeet = 305;
+                int degreeToMove = whiskeringTwo(depthImage, mmToFeet * 2);
+                if (degreeToMove != -1) {
+                    Log.d("WHISKERING", String.format("degreeForward=%4d", degreeToMove));
+                } else {
+                    Log.d("WHISKERING", "Cannot Move!");
                 }
-                dep.append("]");
 
-                String depths = dep.toString();
-//                System.out.println("depths: " +  depths.substring(0, 10) + " "+ depths.substring(depths.length() - 10));
-
-                RequestQueue requestQueue = Volley.newRequestQueue(this);
-                String URL = "https://visionapis.herokuapp.com/test-array";
-
-                System.out.println(Arrays.toString(image_arr));
-                System.out.println("len" + image_arr.length);
-
-                final String requestBody = "\"" + depths + "\"";
-
-                StringRequest stringRequest = new StringRequest(Request.Method.POST, URL,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                Log.d("VOLLEY", response);
-                            }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("VOLLEY", "error" + error.toString());
-                        System.out.println("error" + error.toString());
-                    }
-                }) {
-                    @Override
-                    public String getBodyContentType() {
-                        return "application/json; charset=utf-8";
-                    }
-
-                    @Override
-                    public byte[] getBody() throws AuthFailureError {
-                        try {
-                            return requestBody.getBytes("utf-8");
-                        } catch (UnsupportedEncodingException uee) {
-                            VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    protected Response<String> parseNetworkResponse(NetworkResponse response) {
-                        String responseString = "";
-                        if (response != null) {
-                            responseString = String.valueOf(response.statusCode);
-                            // can get more details such as response.headers
-                        }
-//                        return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
-                        return super.parseNetworkResponse(response);
-                    }
-                };
-
-                requestQueue.add(stringRequest);
-
-            }
-
-            catch (NotYetAvailableException e) {
+            } catch (NotYetAvailableException e) {
                 // This normally means that depth data is not available yet. This is normal so we will not
                 // spam the logcat with this.
             }
@@ -938,6 +990,117 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
         // Compose the virtual scene with the background.
         backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
+    }
+
+
+    private int[][] imageAverageDilation(Image depthImage, final int dilation) {
+        final int imageHeight = depthImage.getHeight();
+        final int imageWidth = depthImage.getWidth();
+
+//        StringBuilder str = new StringBuilder();
+        final int depthDilationHeight = (imageHeight + dilation - 1) / dilation;
+        final int depthDilationWidth = (imageWidth + dilation - 1) / dilation;
+        int[][] depthDilation = new int[depthDilationHeight][depthDilationWidth];
+
+        for (int r = 0; r < imageHeight; ++r) {
+            for (int c = 0; c < imageWidth; ++c) {
+                int depth = getMillimetersDepth(depthImage, c, r); // recieve depth from coordinate (c, r), where the top right is (0, 0)
+
+                /* Index of dilated image */
+                int new_r_idx = r / dilation;
+                int new_c_idx = c / dilation;
+
+                depthDilation[new_r_idx][new_c_idx] += depth;
+//                str.append(String.format("%5d | ", depth));
+            }
+//            str.append("\n");
+        }
+
+        //XXX: we are doing integer division; consider making depthDilation a double or float
+        final int dilation_squared = dilation * dilation;
+        for (int i = 0; i < depthDilation.length; ++i) {
+            for (int j = 0; j < depthDilation[i].length; ++j) {
+                depthDilation[i][j] /= dilation_squared;
+            }
+        }
+
+        return depthDilation;
+    }
+
+    /* determine if index is within bounds of array */
+    private boolean valid(int rows, int cols, int i, int j) {
+        if (i >= 0 && i < rows && j >= 0 && j < cols) {
+            return true;
+        }
+        return false;
+    }
+
+    //NOTE: remember that rows is the height (y)
+    /* Main whsikering algorithm that takes in a depthImage and performs the following algorithm:
+     * 1) dilate the image to 1) speed up computation and 2) reduce image noise
+     * 2)
+     * */
+    private int whiskeringTwo(Image depthImage, int millimeterThreshold) {
+        final int imageHeight = depthImage.getHeight();
+        final int imageWidth = depthImage.getWidth();
+
+        /* Extract depth into a 2D int array and find median pixel depth for each (imageDilation x imageDilation) block (like soduku) */
+        final int imageDilation = 10;
+        final int[][] depthDilation = imageAverageDilation(depthImage, imageDilation);
+
+        /* User pixel perpsective (bottom middle) */
+        final int[] userPixel = {imageHeight, (0 + imageWidth) / 2};
+
+        final int[] degrees = {0, 15, -15, 30, -30, 45, -45, 60, -60};
+
+//        findBestPath(depthDilation, degrees, userPixel, imageDilation);
+
+        for (int degree : degrees) {
+            int unitCircleAngle = 90 - degree;
+            double radians = Math.toRadians(unitCircleAngle);
+            double[] vector = {-Math.sin(radians), Math.cos(radians)}; //<-y, x>: NOTE height is first
+
+            //scale values
+            vector[0] *= imageDilation / 2.0;
+            vector[1] *= imageDilation / 2.0;
+
+            /* Convert <-y, x> into <-y/x, 1> so that the width pixel is normalized to 1 */
+            /** XXX: Scale below is risky (i.e. vector[1] = 0)
+             vector[0] = vector[0] / vector[1];
+             vector[1] = 1;
+             **/
+
+            //XXX: # of iterations a psuedo-random number; scale is not tested
+            /* Find if any object is close to the current line */
+            int[] dx = {-2, -1, 0, 1, 2};
+            int[] dy = {-2, -1, 0, 1, 2};
+            int minDepth = 999999;
+            for (int i = 0; i < 20; ++i) {
+                double[] stepPixel = new double[]{userPixel[0] + vector[0] * i, userPixel[1] + vector[1] * i};
+
+                int new_r_idx = (int) (stepPixel[0] / imageDilation);
+                int new_c_idx = (int) (stepPixel[1] / imageDilation);
+
+                for (int x : dx) {
+                    for (int y : dy) {
+                        int neighbor_r_idx = new_r_idx + x;
+                        int neighbor_c_idx = new_c_idx + y;
+                        //We need to check the neighboring <r, c>
+                        if (valid(depthDilation.length, depthDilation[0].length, neighbor_r_idx, neighbor_c_idx)) {
+                            int depth = depthDilation[neighbor_r_idx][neighbor_c_idx];
+                            minDepth = Math.min(minDepth, depth);
+                        }
+                    }
+                }
+            }
+
+//            Log.d(TAG, String.format("degree=%3d, vectorHeight=%2.4f, vectorWidth=%2.4f, minDepth=%d", degree, vector[0], vector[1], minDepth));
+            if (minDepth >= millimeterThreshold) {
+                Log.d("WHISKERING", String.format("validMovement=%d, minDepth=%d", degree, minDepth));
+                return degree;
+            }
+        }
+        return -1;
     }
 
     // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
