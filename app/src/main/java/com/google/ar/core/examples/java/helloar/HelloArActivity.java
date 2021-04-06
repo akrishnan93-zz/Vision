@@ -164,6 +164,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     private GLSurfaceView surfaceView;
 
     private boolean installRequested;
+    GraphicOverlay graphicOverlay;
 
     private Session session;
     private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
@@ -282,6 +283,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
         myARCanvas = new MyARCanvas(this);
         myARCanvas.setBackgroundColor(Color.RED);
+
+        graphicOverlay = findViewById(R.id.graphic_overlay);
 
         depthSettings.onCreate(this);
         instantPlacementSettings.onCreate(this);
@@ -856,9 +859,21 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //
 //                requestQueue.add(stringRequest);
                 final int mmToFeet = 305;
-                int degreeToMove = whiskeringTwo(depthImage, mmToFeet * 2);
-                if (degreeToMove != -1) {
-                    Log.d("WHISKERING", String.format("degreeForward=%4d", degreeToMove));
+
+                double[] information = whiskeringTwo(depthImage, mmToFeet * 2);
+                if (information[0] != -1) {
+
+                    //information[2], information[3] == <-y, x>
+                    int startX = depthImage.getWidth() / 2;
+                    int startY = depthImage.getHeight();
+                    int endX = (int) (depthImage.getWidth() / 2 + information[3]);
+                    int endY = (int) (depthImage.getHeight() + information[2]);
+
+                    Log.d("WHISKERING", String.format("degreeForward=%3f, startX=%3d, startY=%3d, endX=%3d, endY=%3d", information[0], startX, startY, endX, endY));
+                    Rect lineRec = new Rect(startX, endY, endX, startY);
+                    List<DetectedObject.Label> linelabels = new ArrayList<>();
+                    DetectedObject lineObject = new DetectedObject(lineRec, 1, linelabels);
+                    graphicOverlay.add(new ObjectGraphic(graphicOverlay, lineObject));
                 } else {
                     Log.d("WHISKERING", "Cannot Move!");
                 }
@@ -1040,7 +1055,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
      * 1) dilate the image to 1) speed up computation and 2) reduce image noise
      * 2)
      * */
-    private int whiskeringTwo(Image depthImage, int millimeterThreshold) {
+    private double[] whiskeringTwo(Image depthImage, int millimeterThreshold) {
         final int imageHeight = depthImage.getHeight();
         final int imageWidth = depthImage.getWidth();
 
@@ -1097,10 +1112,12 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //            Log.d(TAG, String.format("degree=%3d, vectorHeight=%2.4f, vectorWidth=%2.4f, minDepth=%d", degree, vector[0], vector[1], minDepth));
             if (minDepth >= millimeterThreshold) {
                 Log.d("WHISKERING", String.format("validMovement=%d, minDepth=%d", degree, minDepth));
-                return degree;
+                double[] information = {degree, minDepth, vector[0] * 200, vector[1] * 200};
+                return information;
             }
         }
-        return -1;
+        double[] information = {-1, -1, -1, -1};
+        return information;
     }
 
     // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
