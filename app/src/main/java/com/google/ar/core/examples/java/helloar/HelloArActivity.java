@@ -29,6 +29,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -860,19 +861,31 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //                requestQueue.add(stringRequest);
                 final int mmToFeet = 305;
 
-                double[] information = whiskeringTwo(depthImage, mmToFeet * 2);
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+//                int height = displayMetrics.heightPixels;
+//                int width = displayMetrics.widthPixels;
+
+                double[] information = whiskeringTwo(depthImage, 1500);
                 if (information[0] != -1) {
 
                     //information[2], information[3] == <-y, x>
-                    int startX = depthImage.getWidth() / 2;
-                    int startY = depthImage.getHeight();
-                    int endX = (int) (depthImage.getWidth() / 2 + information[3]);
-                    int endY = (int) (depthImage.getHeight() + information[2]);
+//                    int startX = depthImage.getWidth() / 2;
+                    int startX = displayMetrics.widthPixels / 2;
+//                    int startY = depthImage.getHeight();
+                    int startY = displayMetrics.heightPixels;
+                    int endX = (int) (startX + information[3]);
+                    int endY = (int) (startY + information[2]);
 
-                    Log.d("WHISKERING", String.format("degreeForward=%3f, startX=%3d, startY=%3d, endX=%3d, endY=%3d", information[0], startX, startY, endX, endY));
                     Rect lineRec = new Rect(startX, endY, endX, startY);
+//                    Rect lineRec = new Rect(startX, 230, 540, startY);
+                    Log.d("WHISKERING", String.format("degreeForward=%3f, startX=%3d, startY=%3d, endX=%3d, endY=%3d", information[0], startX, startY, endX, endY));
+
+
                     List<DetectedObject.Label> linelabels = new ArrayList<>();
                     DetectedObject lineObject = new DetectedObject(lineRec, 1, linelabels);
+
+                    graphicOverlay.clear();
                     graphicOverlay.add(new ObjectGraphic(graphicOverlay, lineObject));
                 } else {
                     Log.d("WHISKERING", "Cannot Move!");
@@ -1012,7 +1025,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         final int imageHeight = depthImage.getHeight();
         final int imageWidth = depthImage.getWidth();
 
-//        StringBuilder str = new StringBuilder();
+        StringBuilder str = new StringBuilder();
         final int depthDilationHeight = (imageHeight + dilation - 1) / dilation;
         final int depthDilationWidth = (imageWidth + dilation - 1) / dilation;
         int[][] depthDilation = new int[depthDilationHeight][depthDilationWidth];
@@ -1026,9 +1039,9 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
                 int new_c_idx = c / dilation;
 
                 depthDilation[new_r_idx][new_c_idx] += depth;
-//                str.append(String.format("%5d | ", depth));
+                str.append(String.format("%5d | ", depth));
             }
-//            str.append("\n");
+            str.append("\n");
         }
 
         //XXX: we are doing integer division; consider making depthDilation a double or float
@@ -1039,6 +1052,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
             }
         }
 
+        Log.d("WHISKERING", "" + depthDilation[89][80]);
         return depthDilation;
     }
 
@@ -1051,7 +1065,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     }
 
     //NOTE: remember that rows is the height (y)
-    /* Main whsikering algorithm that takes in a depthImage and performs the following algorithm:
+    /* Main whiskering algorithm that takes in a depthImage and performs the following algorithm:
      * 1) dilate the image to 1) speed up computation and 2) reduce image noise
      * 2)
      * */
@@ -1060,7 +1074,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         final int imageWidth = depthImage.getWidth();
 
         /* Extract depth into a 2D int array and find median pixel depth for each (imageDilation x imageDilation) block (like soduku) */
-        final int imageDilation = 10;
+        final int imageDilation = 1;
         final int[][] depthDilation = imageAverageDilation(depthImage, imageDilation);
 
         /* User pixel perpsective (bottom middle) */
@@ -1076,8 +1090,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
             double[] vector = {-Math.sin(radians), Math.cos(radians)}; //<-y, x>: NOTE height is first
 
             //scale values
-            vector[0] *= imageDilation / 2.0;
-            vector[1] *= imageDilation / 2.0;
+//            vector[0] *= imageDilation / 2.0;
+//            vector[1] *= imageDilation / 2.0;
 
             /* Convert <-y, x> into <-y/x, 1> so that the width pixel is normalized to 1 */
             /** XXX: Scale below is risky (i.e. vector[1] = 0)
@@ -1090,7 +1104,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
             int[] dx = {-2, -1, 0, 1, 2};
             int[] dy = {-2, -1, 0, 1, 2};
             int minDepth = 999999;
-            for (int i = 0; i < 20; ++i) {
+            for (int i = 0; i < 70; ++i) {
                 double[] stepPixel = new double[]{userPixel[0] + vector[0] * i, userPixel[1] + vector[1] * i};
 
                 int new_r_idx = (int) (stepPixel[0] / imageDilation);
@@ -1112,7 +1126,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 //            Log.d(TAG, String.format("degree=%3d, vectorHeight=%2.4f, vectorWidth=%2.4f, minDepth=%d", degree, vector[0], vector[1], minDepth));
             if (minDepth >= millimeterThreshold) {
                 Log.d("WHISKERING", String.format("validMovement=%d, minDepth=%d", degree, minDepth));
-                double[] information = {degree, minDepth, vector[0] * 200, vector[1] * 200};
+                double[] information = {degree, minDepth, vector[0] * 2000, vector[1] * 2000};
                 return information;
             }
         }
